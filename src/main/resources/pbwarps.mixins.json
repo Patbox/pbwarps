@@ -1,0 +1,11 @@
+{
+	"required": true,
+	"package": "eu.pb4.warps.mixins",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"PredicateRegistryAccessor"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

@@ -1,0 +1,23 @@
+{
+  "command.pbwarps.warp": "Warped to %s",
+  "command.pbwarps.teleport.other": "Warped %s to %s",
+  "command.pbwarps.create.success": "Warp '%s' has been created at %s with yaw %s and pitch %s in %s!",
+  "command.pbwarps.modify.position": "Modified '%s' warp target to  %s with yaw %s and pitch %s in %s!",
+  "command.pbwarps.modify.predicate": "Modified '%s' warp predicate to '%s' with data %s!",
+  "command.pbwarps.modify.predicate.invalid_predicate": "Predicate '%s' doesn't exist!",
+  "command.pbwarps.modify.predicate.invalid_predicate_data": "Predicate '%s's data is not valid!",
+  "command.pbwarps.modify.predicate.clear": "Removed '%s' warp's predicate!",
+  "command.pbwarps.modify.name": "Modified '%s' warp name to %s!",
+  "command.pbwarps.modify.icon": "Modified '%s' warp icon to %s!",
+  "command.pbwarps.remove": "Removed warp '%s'!",
+  "command.pbwarps.create.duplicate": "Warp '%s' already exists!",
+  "command.pbwarps.invalid_warp": "Warp '%s' doesn't exist!",
+  "command.pbwarps.info.id": "Warp id: %s",
+  "command.pbwarps.info.name": "Name: %s",
+  "command.pbwarps.info.unformatted_name": "Unformatted name: %s",
+  "command.pbwarps.info.position": "Position: %s (%s %s) in %s",
+  "command.pbwarps.info.icon": "Icon: %s",
+  "command.pbwarps.info.predicate_type": "Predicate Type: %s",
+  "command.pbwarps.info.predicate_data": "Predicate Data: %s",
+  "gui.pbwarps.warp_selector": "Warp to..."
+}
