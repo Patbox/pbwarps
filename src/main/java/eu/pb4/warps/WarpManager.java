@@ -18,7 +18,7 @@ public class WarpManager {
     private static final Codec<List<WarpData>> SAVE_CODEC = WarpData.CODEC.listOf().fieldOf("warps").codec();
     private static WarpManager manager = null;
     private final TreeMap<String, WarpData> warps = new TreeMap<>();
-    private final List<WarpData> warpArr = null;
+    private List<WarpData> warpArr = null;
     private final Path savePath;
     private final MinecraftServer server;
 
@@ -55,14 +55,15 @@ public class WarpManager {
         }
 
         this.warps.put(data.id(), data);
+        warpArr = null;
         return true;
     }
     public boolean updateWarp(WarpData data) {
         if (!this.warps.containsKey(data.id())) {
             return false;
         }
-
         this.warps.put(data.id(), data);
+        warpArr = null;
         return true;
     }
 
@@ -78,11 +79,16 @@ public class WarpManager {
             this.warps.remove(id);
         }
         this.warps.put(warp.id(), warp);
+        warpArr = null;
         return true;
     }
 
     public boolean removeWarp(String warp) {
-        return this.warps.remove(warp) != null;
+        var removed = this.warps.remove(warp) != null;
+        if (removed) {
+            warpArr = null;
+        }
+        return removed;
     }
 
     @Nullable
@@ -90,8 +96,12 @@ public class WarpManager {
         return this.warps.get(id);
     }
 
-    public Collection<WarpData> warps() {
-        return this.warps.values();
+    public List<WarpData> warps() {
+        if (warpArr == null) {
+            warpArr = new ArrayList<>(this.warps.values());
+            warpArr.sort(Comparator.comparingInt(WarpData::priority).reversed().thenComparing(WarpData::id));
+        }
+        return warpArr;
     }
 
     public void save() {

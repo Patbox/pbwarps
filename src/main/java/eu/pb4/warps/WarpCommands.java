@@ -1,7 +1,9 @@
 package eu.pb4.warps;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
@@ -25,6 +27,7 @@ import net.minecraft.util.Formatting;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
@@ -43,7 +46,7 @@ public class WarpCommands {
     private static final SuggestionProvider<ServerCommandSource> WARP_ID_SUGGESTION = (context, builder) -> {
         for (var warp : WarpManager.get().warps()) {
             if (warp.id().startsWith(builder.getRemainingLowerCase())) {
-                builder.suggest(warp.id(), warp.name().text());
+                builder.suggest(warp.id().contains(" ") ? '"' + warp.id() + '"' : warp.id(), warp.name().text());
             }
         }
         return builder.buildFuture();
@@ -53,31 +56,41 @@ public class WarpCommands {
         dispatcher.register(literal("warp")
                 .requires(Permissions.require("pbwarps.command", true))
                 .executes(WarpCommands::openWarpUi)
-                .then(argument("id", StringArgumentType.word()).suggests(WARP_ID_SUGGESTION_WITH_PREDICATE)
+                .then(argument("id", StringArgumentType.greedyString()).suggests(WARP_ID_SUGGESTION_WITH_PREDICATE)
                         .executes(WarpCommands::warpTeleportSelf)
                 )
         );
+
+        Supplier<RequiredArgumentBuilder<ServerCommandSource, ?>> createPosition = () -> argument("position", Vec3ArgumentType.vec3(true))
+                .executes(WarpCommands::createWarp)
+                .then(argument("rotation", RotationArgumentType.rotation())
+                        .executes(WarpCommands::createWarp)
+                        .then(argument("world", DimensionArgumentType.dimension())
+                                .executes(WarpCommands::createWarp)
+                        )
+                );
 
         dispatcher.register(literal("warps")
                 .requires(Permissions.require("pbwarps.warps_command", true))
                 .then(literal("create")
                         .requires(Permissions.require("pbwarps.create", 2))
-                        .then(argument("id", StringArgumentType.word())
+                        .then(argument("id", StringArgumentType.string())
                                 .executes(WarpCommands::createWarp)
-                                .then(argument("position", Vec3ArgumentType.vec3(true))
+                                .then(argument("name", StringArgumentType.string())
                                         .executes(WarpCommands::createWarp)
-                                        .then(argument("rotation", RotationArgumentType.rotation())
-                                                .executes(WarpCommands::createWarp)
-                                                .then(argument("world", DimensionArgumentType.dimension())
+                                        .then(createPosition.get())
+                                        .then(
+                                                argument("icon", ItemStackArgumentType.itemStack(access))
                                                         .executes(WarpCommands::createWarp)
-                                                )
+                                                        .then(createPosition.get())
                                         )
                                 )
+                                .then(createPosition.get())
                         )
                 )
                 .then(literal("modify")
                         .requires(Permissions.require("pbwarps.modify", 2))
-                        .then(argument("id", StringArgumentType.word())
+                        .then(argument("id", StringArgumentType.string())
                                 .suggests(WARP_ID_SUGGESTION)
                                 .then(literal("name")
                                         .requires(Permissions.require("pbwarps.modify.name", 2))
@@ -100,6 +113,10 @@ public class WarpCommands {
                                         .requires(Permissions.require("pbwarps.modify.icon", 2))
                                         .then(argument("icon", ItemStackArgumentType.itemStack(access)).executes(WarpCommands::setIcon))
                                 )
+                                .then(literal("priority")
+                                        .requires(Permissions.require("pbwarps.modify.priority", 2))
+                                        .then(argument("priority", IntegerArgumentType.integer()).executes(WarpCommands::setPriority))
+                                )
                                 .then(literal("predicate")
                                         .requires(Permissions.require("pbwarps.modify.predicate", 2))
                                         .then(literal("clear").executes(WarpCommands::clearPredicate))
@@ -116,14 +133,14 @@ public class WarpCommands {
                 )
                 .then(literal("remove")
                         .requires(Permissions.require("pbwarps.remove", 2))
-                        .then(argument("id", StringArgumentType.word())
+                        .then(argument("id", StringArgumentType.string())
                                 .suggests(WARP_ID_SUGGESTION)
                                 .executes(WarpCommands::removeWarp)
                         )
                 )
                 .then(literal("teleport")
                         .requires(Permissions.require("pbwarps.teleport", 2))
-                        .then(argument("id", StringArgumentType.word())
+                        .then(argument("id", StringArgumentType.string())
                                 .suggests(WARP_ID_SUGGESTION)
                                 .executes(WarpCommands::warpTeleportSelfUnrestricted)
                                 .then(argument("entity", EntityArgumentType.entities())
@@ -134,7 +151,7 @@ public class WarpCommands {
                 )
                 .then(literal("info")
                         .requires(Permissions.require("pbwarps.info", 2))
-                        .then(argument("id", StringArgumentType.word())
+                        .then(argument("id", StringArgumentType.string())
                                 .suggests(WARP_ID_SUGGESTION)
                                 .executes(WarpCommands::showInfo)
                         )
@@ -151,10 +168,11 @@ public class WarpCommands {
             return 0;
         }
         context.getSource().sendMessage(Text.translatable("command.pbwarps.info.id", warp.id()));
+        context.getSource().sendMessage(Text.translatable("command.pbwarps.info.priority", warp.priority()));
         context.getSource().sendMessage(Text.translatable("command.pbwarps.info.name", warp.name().text()));
         context.getSource().sendMessage(Text.translatable("command.pbwarps.info.unformatted_name", warp.name().input()));
         context.getSource().sendMessage(Text.translatable("command.pbwarps.info.icon", warp.icon().toHoverableText()));
-        context.getSource().sendMessage(Text.translatable("command.pbwarps.info.position", warp.target().pos().toString(), warp.target().yaw(), warp.target().pitch(), warp.target().world().getValue().toString()));
+        context.getSource().sendMessage(Text.translatable("command.pbwarps.info.position", warp.target().pos().toString(), warp.target().yaw().map(String::valueOf).orElse("~"), warp.target().pitch().map(String::valueOf).orElse("~"), warp.target().world().getValue().toString()));
         if (warp.predicate().isPresent()) {
             context.getSource().sendMessage(Text.translatable("command.pbwarps.info.predicate_type", warp.predicate().get().identifier().toString()));
             context.getSource().sendMessage(Text.translatable("command.pbwarps.info.predicate_data", NbtHelper.toPrettyPrintedText(
@@ -246,7 +264,7 @@ public class WarpCommands {
         var target = getTarget(context);
 
         if (WarpManager.get().updateWarp(id, x -> x.withTarget(target))) {
-            context.getSource().sendMessage(Text.translatable("command.pbwarps.modify.position", id, target.pos().toString(), target.yaw(), target.pitch(), target.world().getValue().toString()));
+            context.getSource().sendMessage(Text.translatable("command.pbwarps.modify.position", id, target.pos().toString(), target.yaw().map(String::valueOf).orElse("~"), target.pitch().map(String::valueOf).orElse("~"), target.world().getValue().toString()));
             return 1;
         }
 
@@ -267,12 +285,34 @@ public class WarpCommands {
         return 0;
     }
 
+    private static int setPriority(CommandContext<ServerCommandSource> context) {
+        var id = StringArgumentType.getString(context, "id");
+        var priority = IntegerArgumentType.getInteger(context, "priority");
+
+        if (WarpManager.get().updateWarp(id, x -> x.withPriority(priority))) {
+            context.getSource().sendMessage(Text.translatable("command.pbwarps.modify.priority", id, Objects.requireNonNull(WarpManager.get().get(id)).name().text()));
+            return 1;
+        }
+
+        context.getSource().sendMessage(Text.translatable("command.pbwarps.invalid_warp").formatted(Formatting.RED));
+        return 0;
+    }
+
     private static int createWarp(CommandContext<ServerCommandSource> context) {
         var id = StringArgumentType.getString(context, "id");
         var target = getTarget(context);
 
-        if (WarpManager.get().addWarp(new WarpData(id, target))) {
-            context.getSource().sendMessage(Text.translatable("command.pbwarps.create.success", id, target.pos().toString(), target.yaw(), target.pitch(), target.world().getValue().toString()));
+        var warp = new WarpData(id, target);
+
+        try {
+            warp = warp.withIcon(ItemStackArgumentType.getItemStackArgument(context, "icon").createStack(1, false));
+        } catch (Throwable ignored) {}
+        try {
+            warp = warp.withName(StringArgumentType.getString(context, "name"));
+        } catch (Throwable ignored) {}
+
+        if (WarpManager.get().addWarp(warp)) {
+            context.getSource().sendMessage(Text.translatable("command.pbwarps.create.success", id, target.pos().toString(), target.yaw().map(String::valueOf).orElse("~"), target.pitch().map(String::valueOf).orElse("~"), target.world().getValue().toString()));
             return 1;
         }
 

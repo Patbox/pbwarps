@@ -19,12 +19,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.Optional;
 
-public record WarpData(String id, WrappedText name, ItemStack icon, Target target,
+public record WarpData(String id, int priority, WrappedText name, ItemStack icon, Target target,
                        Optional<MinecraftPredicate> predicate) {
     public static final NodeParser NAME_PARSER = NodeParser.builder().requireSafe().legacyAll().quickText().build();
 
     public static final Codec<WarpData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.fieldOf("id").forGetter(WarpData::id),
+            Codec.INT.optionalFieldOf("priority", 0).forGetter(WarpData::priority),
             NAME_PARSER.codec().fieldOf("name").forGetter(WarpData::name),
             ItemStack.UNCOUNTED_CODEC.fieldOf("icon").forGetter(WarpData::icon),
             Target.CODEC.forGetter(WarpData::target),
@@ -32,27 +33,30 @@ public record WarpData(String id, WrappedText name, ItemStack icon, Target targe
     ).apply(instance, WarpData::new));
 
     public WarpData(String id, Target target) {
-        this(id, WrappedText.from(NAME_PARSER, id), Items.GRASS_BLOCK.getDefaultStack(), target, Optional.empty());
+        this(id, 0, WrappedText.from(NAME_PARSER, id), Items.GRASS_BLOCK.getDefaultStack(), target, Optional.empty());
     }
 
     public WarpData withId(String id) {
-        return new WarpData(id, name, icon, target, predicate);
+        return new WarpData(id, priority, name, icon, target, predicate);
     }
 
     public WarpData withName(String name) {
-        return new WarpData(id, WrappedText.from(NAME_PARSER, name), icon, target, predicate);
+        return new WarpData(id, priority, WrappedText.from(NAME_PARSER, name), icon, target, predicate);
     }
 
     public WarpData withIcon(ItemStack icon) {
-        return new WarpData(id, name, icon, target, predicate);
+        return new WarpData(id, priority, name, icon, target, predicate);
     }
 
     public WarpData withTarget(Target target) {
-        return new WarpData(id, name, icon, target, predicate);
+        return new WarpData(id, priority, name, icon, target, predicate);
     }
 
     public WarpData withPredicate(@Nullable MinecraftPredicate predicate) {
-        return new WarpData(id, name, icon, target, Optional.ofNullable(predicate));
+        return new WarpData(id, priority, name, icon, target, Optional.ofNullable(predicate));
+    }
+    public WarpData withPriority(int priority) {
+        return new WarpData(id, priority, name, icon, target, predicate);
     }
 
     public void handleTeleport(Entity entity) {

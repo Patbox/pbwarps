@@ -1,6 +1,5 @@
 package eu.pb4.warps.ui;
 
-import com.mojang.authlib.GameProfile;
 import eu.pb4.predicate.api.PredicateContext;
 import eu.pb4.sgui.api.elements.GuiElementBuilder;
 import eu.pb4.sgui.api.elements.GuiElementInterface;
@@ -8,7 +7,6 @@ import eu.pb4.warps.WarpManager;
 import eu.pb4.warps.data.WarpData;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import net.minecraft.world.TeleportTarget;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +16,7 @@ public class WarpSelectGui extends PagedGui {
 
     protected WarpSelectGui(ServerPlayerEntity player) {
         super(player, null);
-        this.setTitle(Text.translatable("gui.pbwarps.warp_selector"));
+        this.setTitle(GuiUtils.formatTexturedText(player, Text.literal("e"), Text.translatable("gui.pbwarps.warp_selector")));
 
         var ctx = PredicateContext.of(player);
         for (var warp : WarpManager.get().warps()) {
@@ -35,8 +33,8 @@ public class WarpSelectGui extends PagedGui {
     }
 
     @Override
-    protected int getPageAmount() {
-        return this.warps.size() / PAGE_SIZE + 1;
+    public int getPageAmount() {
+        return Math.max((this.warps.size() - 1)/ PAGE_SIZE + 1, 1);
     }
 
     @Override
@@ -57,7 +55,7 @@ public class WarpSelectGui extends PagedGui {
             return icon.build();
         }
 
-        return DisplayElement.empty();
+        return GuiUtils.EMPTY;
     }
 
 

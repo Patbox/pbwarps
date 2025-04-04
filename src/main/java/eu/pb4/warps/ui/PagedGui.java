@@ -13,11 +13,12 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-public abstract class PagedGui extends SimpleGui {
+public abstract class PagedGui extends SimpleGui implements PageAware {
     public static final int PAGE_SIZE = 9 * 4;
     protected final Runnable closeCallback;
     public boolean ignoreCloseCallback;
@@ -44,7 +45,8 @@ public abstract class PagedGui extends SimpleGui {
         }
     }
 
-    protected void nextPage() {
+    @Override
+    public void nextPage() {
         this.page = Math.min(this.getPageAmount() - 1, this.page + 1);
         this.updateDisplay();
     }
@@ -53,7 +55,8 @@ public abstract class PagedGui extends SimpleGui {
         return this.getPageAmount() > this.page + 1;
     }
 
-    protected void previousPage() {
+    @Override
+    public void previousPage() {
         this.page = Math.max(0, this.page - 1);
         this.updateDisplay();
     }
@@ -69,7 +72,7 @@ public abstract class PagedGui extends SimpleGui {
             var element = this.getElement(offset + i);
 
             if (element == null) {
-                element = DisplayElement.empty();
+                element = GuiUtils.EMPTY;
             }
 
             this.setSlot(i, element);
@@ -79,90 +82,36 @@ public abstract class PagedGui extends SimpleGui {
             var navElement = this.getNavElement(i);
 
             if (navElement == null) {
-                navElement = DisplayElement.EMPTY;
+                navElement = GuiUtils.EMPTY;
             }
 
             this.setSlot(i + PAGE_SIZE, navElement);
         }
     }
 
-    protected int getPage() {
+    @Override
+    public int getPage() {
         return this.page;
     }
 
-    protected abstract int getPageAmount();
+    @Override
+    public void setPage(int page) {
+        this.page = MathHelper.clamp(page, 0, getPageAmount());
+    }
+
+    @Override
+    public abstract int getPageAmount();
 
     protected abstract GuiElementInterface getElement(int id);
 
     protected GuiElementInterface getNavElement(int id) {
         return switch (id) {
-            case 1 -> DisplayElement.previousPage(this);
-            case 3 -> DisplayElement.nextPage(this);
-            case 7 -> new GuiElementBuilder(Items.STRUCTURE_VOID)
-                    .setName(ScreenTexts.BACK.copy().formatted(Formatting.RED))
-                    .hideDefaultTooltip()
-                    .setCallback((x, y, z) -> {
-                                playClickSound(this.player);
-                                this.close(this.closeCallback != null);
-                            }
-                    ).build();
-            default -> DisplayElement.filler();
+            case 3 -> this.canPreviousPage() ? GuiUtils.previousPage(this.player,this) : GuiUtils.fillerStack(player);
+            case 5 -> this.canNextPage() ? GuiUtils.nextPage(this.player,this) : GuiUtils.fillerStack(player);
+            case 8 ->  GuiUtils.backButton(this.player, () -> {
+                this.close(false);
+            }, true);
+            default -> GuiUtils.fillerStack(this.player);
         };
-    }
-
-    public interface DisplayElement {
-        GuiElementInterface EMPTY = new GuiElement(ItemStack.EMPTY, GuiElementInterface.EMPTY_CALLBACK);
-        GuiElementInterface FILLER =
-                new GuiElementBuilder(Items.WHITE_STAINED_GLASS_PANE)
-                        .setName(Text.empty())
-                        .hideTooltip().build();
-
-        static GuiElementInterface nextPage(PagedGui gui) {
-            if (gui.canNextPage()) {
-                return
-                        new GuiElementBuilder(Items.PLAYER_HEAD)
-                                .setName(Text.translatable("spectatorMenu.next_page").formatted(Formatting.WHITE))
-                                .hideDefaultTooltip()
-                                .setSkullOwner(GuiTextures.GUI_NEXT_PAGE)
-                                .setCallback((x, y, z) -> {
-                                    playClickSound(gui.player);
-                                    gui.nextPage();
-                                }).build();
-            } else {
-                return
-                        new GuiElementBuilder(Items.PLAYER_HEAD)
-                                .setName(Text.translatable("spectatorMenu.next_page").formatted(Formatting.DARK_GRAY))
-                                .hideDefaultTooltip()
-                                .setSkullOwner(GuiTextures.GUI_NEXT_PAGE_BLOCKED).build();
-            }
-        }
-
-        static GuiElementInterface previousPage(PagedGui gui) {
-            if (gui.canPreviousPage()) {
-                return
-                        new GuiElementBuilder(Items.PLAYER_HEAD)
-                                .setName(Text.translatable("spectatorMenu.previous_page").formatted(Formatting.WHITE))
-                                .hideDefaultTooltip()
-                                .setSkullOwner(GuiTextures.GUI_PREVIOUS_PAGE)
-                                .setCallback((x, y, z) -> {
-                                    playClickSound(gui.player);
-                                    gui.previousPage();
-                                }).build();
-            } else {
-                return
-                        new GuiElementBuilder(Items.PLAYER_HEAD)
-                                .setName(Text.translatable("spectatorMenu.previous_page").formatted(Formatting.DARK_GRAY))
-                                .hideDefaultTooltip()
-                                .setSkullOwner(GuiTextures.GUI_PREVIOUS_PAGE_BLOCKED).build();
-            }
-        }
-
-        static GuiElementInterface filler() {
-            return FILLER;
-        }
-
-        static GuiElementInterface empty() {
-            return EMPTY;
-        }
     }
 }

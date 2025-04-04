@@ -35,7 +35,8 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	modImplementation include('xyz.nucleoid:server-translations-api:2.3.1+1.21-pre2')
 	//modImplementation include('eu.pb4:polymer-core:0.9.18+1.21.1')
-	//modImplementation include('eu.pb4:polymer-resource-pack:0.9.18+1.21.1')
+	modImplementation include('eu.pb4:polymer-resource-pack:0.9.18+1.21.1')
+	modRuntimeOnly 'eu.pb4:polymer-autohost:0.9.18+1.21.1'
 	//modImplementation include('eu.pb4:polymer-virtual-entity:0.9.18+1.21.1')
 	modImplementation include("eu.pb4:sgui:1.6.1+1.21.1")
 	modImplementation include("eu.pb4:placeholder-api:2.4.2+1.21")
@@ -95,7 +96,7 @@ publishing {
 if (System.getenv("MODRINTH")) {
 	modrinth {
 		token = System.getenv("MODRINTH")
-		projectId = 'yn9u3ypm'
+		projectId = 'DZ2XMKfr'
 		versionNumber = "" + version // The version of the mod to upload.
 		uploadFile = remapJar // This links to a task that builds your mod jar and sets "uploadFile" to the mod jar.
 		gameVersions = [((String) project.minecraft_version)]
