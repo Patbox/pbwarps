@@ -9,9 +9,9 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 import java.util.Map;
 
-@Mixin(PredicateRegistry.class)
+@Mixin(value = PredicateRegistry.class, remap = false)
 public interface PredicateRegistryAccessor {
-    @Accessor
+    @Accessor(remap = false)
     static Map<Identifier, MapCodec<MinecraftPredicate>> getCODECS() {
         throw new UnsupportedOperationException();
     }

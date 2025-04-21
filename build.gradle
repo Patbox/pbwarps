@@ -33,15 +33,14 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-	modImplementation include('xyz.nucleoid:server-translations-api:2.3.1+1.21-pre2')
+	modImplementation include('xyz.nucleoid:server-translations-api:2.5.0+1.21.5-rc1')
 	//modImplementation include('eu.pb4:polymer-core:0.9.18+1.21.1')
-	modImplementation include('eu.pb4:polymer-resource-pack:0.9.18+1.21.1')
-	modRuntimeOnly 'eu.pb4:polymer-autohost:0.9.18+1.21.1'
-	//modImplementation include('eu.pb4:polymer-virtual-entity:0.9.18+1.21.1')
-	modImplementation include("eu.pb4:sgui:1.6.1+1.21.1")
-	modImplementation include("eu.pb4:placeholder-api:2.4.2+1.21")
-	modImplementation include('eu.pb4:predicate-api:0.5.2+1.21')
-	modImplementation include("me.lucko:fabric-permissions-api:0.3.1")
+	modImplementation include('eu.pb4:polymer-resource-pack:0.12.3+1.21.5')
+	modRuntimeOnly 'eu.pb4:polymer-autohost:0.12.3+1.21.5'
+	modImplementation include("eu.pb4:sgui:1.9.0+1.21.5")
+	modImplementation include("eu.pb4:placeholder-api:2.6.2+1.21.5")
+	modImplementation include('eu.pb4:predicate-api:0.6.0+1.21.2')
+	modImplementation include("me.lucko:fabric-permissions-api:0.3.3")
 }
 
 processResources {

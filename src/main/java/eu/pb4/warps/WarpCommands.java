@@ -20,10 +20,12 @@ import net.minecraft.command.argument.*;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtHelper;
 import net.minecraft.nbt.NbtOps;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.math.random.Random;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -189,7 +191,7 @@ public class WarpCommands {
             return 1;
         }
 
-        context.getSource().sendMessage(Text.translatable("command.pbwarps.invalid_warp").formatted(Formatting.RED));
+        context.getSource().sendMessage(Text.translatable("command.pbwarps.invalid_warp", id).formatted(Formatting.RED));
         return 0;
     }
 
@@ -230,7 +232,7 @@ public class WarpCommands {
             return 1;
         }
 
-        context.getSource().sendMessage(Text.translatable("command.pbwarps.invalid_warp").formatted(Formatting.RED));
+        context.getSource().sendMessage(Text.translatable("command.pbwarps.invalid_warp", id).formatted(Formatting.RED));
         return 0;
     }
 
@@ -242,7 +244,7 @@ public class WarpCommands {
             return 1;
         }
 
-        context.getSource().sendMessage(Text.translatable("command.pbwarps.invalid_warp").formatted(Formatting.RED));
+        context.getSource().sendMessage(Text.translatable("command.pbwarps.invalid_warp", id).formatted(Formatting.RED));
         return 0;
     }
 
@@ -255,7 +257,7 @@ public class WarpCommands {
             return 1;
         }
 
-        context.getSource().sendMessage(Text.translatable("command.pbwarps.invalid_warp").formatted(Formatting.RED));
+        context.getSource().sendMessage(Text.translatable("command.pbwarps.invalid_warp", id).formatted(Formatting.RED));
         return 0;
     }
 
@@ -268,7 +270,7 @@ public class WarpCommands {
             return 1;
         }
 
-        context.getSource().sendMessage(Text.translatable("command.pbwarps.invalid_warp").formatted(Formatting.RED));
+        context.getSource().sendMessage(Text.translatable("command.pbwarps.invalid_warp", id).formatted(Formatting.RED));
         return 0;
     }
 
@@ -281,7 +283,7 @@ public class WarpCommands {
             return 1;
         }
 
-        context.getSource().sendMessage(Text.translatable("command.pbwarps.invalid_warp").formatted(Formatting.RED));
+        context.getSource().sendMessage(Text.translatable("command.pbwarps.invalid_warp", id).formatted(Formatting.RED));
         return 0;
     }
 
@@ -294,7 +296,7 @@ public class WarpCommands {
             return 1;
         }
 
-        context.getSource().sendMessage(Text.translatable("command.pbwarps.invalid_warp").formatted(Formatting.RED));
+        context.getSource().sendMessage(Text.translatable("command.pbwarps.invalid_warp", id).formatted(Formatting.RED));
         return 0;
     }
 
@@ -302,11 +304,16 @@ public class WarpCommands {
         var id = StringArgumentType.getString(context, "id");
         var target = getTarget(context);
 
+        var icon = Registries.ITEM.getRandom(Random.create()).orElseThrow().value().getDefaultStack();
+
         var warp = new WarpData(id, target);
 
         try {
-            warp = warp.withIcon(ItemStackArgumentType.getItemStackArgument(context, "icon").createStack(1, false));
+            icon = ItemStackArgumentType.getItemStackArgument(context, "icon").createStack(1, false);
         } catch (Throwable ignored) {}
+        warp = warp.withIcon(icon);
+
+
         try {
             warp = warp.withName(StringArgumentType.getString(context, "name"));
         } catch (Throwable ignored) {}
@@ -331,7 +338,7 @@ public class WarpCommands {
         } catch (Throwable ignored) {
         }
         try {
-            var vec = RotationArgumentType.getRotation(context, "rotation").toAbsoluteRotation(context.getSource());
+            var vec = RotationArgumentType.getRotation(context, "rotation").getRotation(context.getSource());
             pitch = vec.x;
             yaw = vec.y;
         } catch (Throwable ignored) {
